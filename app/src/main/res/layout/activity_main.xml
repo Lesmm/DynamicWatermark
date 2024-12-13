@@ -8,6 +8,7 @@
         android:id="@+id/clickMeButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:stateListAnimator="@null"
         android:text="Click me to refresh Watermark" />
 
     <Button
@@ -15,5 +16,22 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Click me to clear Watermark" />
+
+    <com.newbee.dynamic.watermark.views.TestCaseFrameLayout
+        android:id="@+id/case_frame_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/transparent"
+        >
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:textStyle="bold"
+            android:textColor="@color/black"
+            android:text="Just test!" />
+
+    </com.newbee.dynamic.watermark.views.TestCaseFrameLayout>
 
 </LinearLayout>
