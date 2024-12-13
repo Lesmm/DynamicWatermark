@@ -1,8 +1,22 @@
 [versions]
-agp = "8.5.0"
-#agp = "7.4.2"
-kotlin = "2.0.0"
-coreKtx = "1.9.0"
+#----------- Gradle 8.x - Java 17 -----------
+#agp = "8.5.0"
+#kotlin = "2.0.0"
+#coreKtx = "1.9.0"
+#----------- Gradle 7.x - Java 11 -----------
+agp = "7.4.2"
+kotlin = "1.7.10"
+coreKtx = "1.7.0"
+
+# 注意上面版本号要对应降下来，要不 jitpack.io 会编译报错:
+# ERROR:D8: com.android.tools.r8.kotlin.H
+# * What went wrong:
+# Execution failed for task ':app:mergeExtDexDebug'.
+# > Could not resolve all files for configuration ':app:debugRuntimeClasspath'.
+# > Failed to transform kotlin-stdlib-2.0.0.jar (org.jetbrains.kotlin:kotlin-stdlib:2.0.0) to match attributes {artifactType=android-dex, asm-transformed-variant=NONE, dexing-enable-desugaring=true, dexing-enable-jacoco-instrumentation=false, dexing-is-debuggable=true, dexing-min-sdk=21, org.gradle.category=library, org.gradle.jvm.environment=standard-jvm, org.gradle.libraryelements=jar, org.gradle.status=release, org.gradle.usage=java-runtime, org.jetbrains.kotlin.platform.type=jvm}.
+# > Execution failed for DexingWithClasspathTransform: /home/jitpack/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/2.0.0/b48df2c4aede9586cc931ead433bc02d6fd7879e/kotlin-stdlib-2.0.0.jar.
+# > Error while dexing.
+
 appcompat = "1.6.0"
 material = "1.12.0"
 activityKtx = "1.7.0"

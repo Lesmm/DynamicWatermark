@@ -13,6 +13,7 @@ class MainApplication : android.app.Application() {
         // register watermark to activity
         WaterMarkerManager.registerActivity(MainActivity::class.java)
 
+        // show the watermark
         MainActivity.refreshWatermark()
     }
 }

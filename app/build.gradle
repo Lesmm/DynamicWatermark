@@ -44,5 +44,6 @@ dependencies {
     implementation libs.androidx.lifecycle.runtime.ktx
     implementation libs.androidx.appcompat
     implementation project(':dynamic-watermark')
+    // implementation 'com.github.Lesmm:DynamicWatermark:1.0.0'
 
 }
