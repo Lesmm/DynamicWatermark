@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <item name="water_mark_frame_layout" type="id" />
-    <item name="water_mark_text_view" type="id" />
+    <item name="water_mark_drawing_view" type="id" />
 </resources>

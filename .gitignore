@@ -36,3 +36,5 @@ app/unused.txt
 
 app/production/
 .cxx/
+
+release/

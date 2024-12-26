@@ -9,14 +9,16 @@ import android.graphics.ColorFilter
 import android.graphics.Paint
 import android.graphics.PixelFormat
 import android.graphics.drawable.Drawable
-import android.os.Build
+import android.provider.Settings
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.annotation.IntRange
+import androidx.core.view.children
 import java.lang.ref.WeakReference
+import java.util.Objects
 
 /**
  * WaterMaker Manager
@@ -64,6 +66,23 @@ object WaterMarkerManager {
     fun isContainsWaterMark(view: ViewGroup): Boolean = markedViewGroups.any { it.get() == view }
 
     /**
+     * Check if high text contrast is enabled in the system settings - accessibility settings
+     */
+    private var isHighTextContrast: Boolean? = null
+
+    fun isHighTextContrastEnabled(context: Context): Boolean {
+        if (isHighTextContrast == null) {
+            try {
+                val retVal: Int = Settings.Secure.getInt(context.contentResolver, "high_text_contrast_enabled", 0)
+                isHighTextContrast = Objects.equals(retVal, 1)
+            } catch (e: Throwable) {
+                e.printStackTrace()
+            }
+        }
+        return isHighTextContrast ?: false
+    }
+
+    /**
      * Current global paint water mark properties
      */
     val configs: List<WaterMarkerConfig> =
@@ -92,12 +111,15 @@ object WaterMarkerManager {
         }
 
         fun refresh4View(viewGroup: ViewGroup?) {
+            if (viewGroup == null) return
             // Because WaterMarker they shared the same configs instance
-            val frameLayout: FrameLayout? = viewGroup?.findViewById<FrameLayout>(R.id.water_mark_frame_layout)
-            val textView: TextView? = frameLayout?.findViewById<TextView>(R.id.water_mark_text_view)
-            val waterMarker: WaterMarker? = textView?.background as? WaterMarker
-            waterMarker?.isLastPaintWaterMarkerSuccess = null
-            waterMarker?.invalidateSelf()
+            val frameLayout: FrameLayout? = viewGroup.findViewById(R.id.water_mark_frame_layout)
+            // val drawingView: View? = frameLayout?.findViewById(R.id.water_mark_drawing_view)
+            frameLayout?.children?.forEach { drawingView ->
+                val waterMarker: WaterMarker? = (drawingView as? TextView)?.background as? WaterMarker
+                waterMarker?.isLastPaintWaterMarkerSuccess = null
+                waterMarker?.invalidateSelf()
+            }
         }
 
         // Refresh all marked activities
@@ -148,11 +170,7 @@ object WaterMarkerManager {
     /**
      * Create a water mark bitmap from a source bitmap
      */
-    fun createWaterMarkBitmap(
-        bitmap: Bitmap,
-        rowGap: Float = 120f,
-        columnGap: Float = 200f,
-    ): Bitmap {
+    fun createWaterMarkBitmap(bitmap: Bitmap, rowGap: Float = 120f, columnGap: Float = 200f): Bitmap {
         val bitmapConfigs = configs.map {
             WaterMarkerConfig(
                 it.labels,
@@ -168,36 +186,49 @@ object WaterMarkerManager {
         return WaterMarker.doPaint2Bitmap(bitmap, bitmapConfigs)
     }
 
-    // create a frame layout, create a text view as its child to draw the water mark
+    /**
+     * create a frame layout, create a text view as its child to draw the water mark
+     */
     private fun createWaterMarkFrameLayout(context: Context, configs: List<WaterMarkerConfig>, parent: ViewGroup?) {
-        if (parent?.findViewById<View>(R.id.water_mark_frame_layout) != null) {
+        if (parent == null) return;
+        if (parent.findViewById<View>(R.id.water_mark_frame_layout) != null) {
             return
         }
-        val waterDrawable = WaterMarker(context, configs)
 
-        val MATCH_PARENT: Int = FrameLayout.LayoutParams.MATCH_PARENT
         // 1. Create a FrameLayout as the root layout
-        // 2. Create a TextView the add to the FrameLayout
+        val MATCH_PARENT: Int = FrameLayout.LayoutParams.MATCH_PARENT
         val frameLayout = FrameLayout(context)
         frameLayout.layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT)
         frameLayout.id = R.id.water_mark_frame_layout
-        /*
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-            frameLayout.background = waterDrawable
+        parent.addView(frameLayout)
+
+        // 2. Create TextView(s) the add to the FrameLayout
+        if (isHighTextContrastEnabled(context)) {
+            // If high text contrast enabled by user, the text color (including alpha) will be not working
+            for (i in configs.indices) {
+                val config = configs[i]
+                val drawingView = createWaterMarkTextView(context, listOf(config))
+                drawingView.id = R.id.water_mark_drawing_view + i
+                drawingView.alpha = 0.03f / (i + 1)
+                frameLayout.addView(drawingView)
+            }
         } else {
-            frameLayout.setBackgroundDrawable(waterDrawable)
+            val drawingView = createWaterMarkTextView(context, configs)
+            drawingView.id = R.id.water_mark_drawing_view
+            frameLayout.addView(drawingView)
         }
-         */
+    }
 
-        val textView = TextView(context)
-        textView.layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT)
-        textView.gravity = Gravity.CENTER
-        textView.id = R.id.water_mark_text_view
-        frameLayout.addView(textView)
-        textView.background = waterDrawable
-
-        // Add the frame layout to the parent view
-        parent?.addView(frameLayout)
+    /**
+     * Create a text view to draw the water mark
+     */
+    private fun createWaterMarkTextView(context: Context, configs: List<WaterMarkerConfig>): TextView {
+        val MATCH_PARENT: Int = FrameLayout.LayoutParams.MATCH_PARENT
+        val drawingView = TextView(context)
+        drawingView.gravity = Gravity.CENTER
+        drawingView.layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT)
+        drawingView.background = WaterMarker(context, configs)
+        return drawingView
     }
 }
 

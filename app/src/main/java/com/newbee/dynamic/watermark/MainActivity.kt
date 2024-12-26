@@ -1,7 +1,10 @@
 package com.newbee.dynamic.watermark
 
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import com.newbee.dynamic.watermark.databinding.ActivityMainBinding
 import com.newbee.dynamic_watermark.WaterMarkerConfig
@@ -9,18 +12,30 @@ import com.newbee.dynamic_watermark.WaterMarkerConfigBuilder
 import com.newbee.dynamic_watermark.WaterMarkerManager
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Objects
+
 
 class MainActivity : AppCompatActivity() {
 
     lateinit var binding: ActivityMainBinding
 
+    override fun onResume() {
+        super.onResume()
+
+        val retVal: Int = Settings.Secure.getInt(this.contentResolver, "high_text_contrast_enabled", 0)
+        val isEnable = Objects.equals(retVal, 1)
+        binding.tvHighTextContrast.text = "High text contrast: ${isEnable}"
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         // setContentView(R.layout.activity_main)
         binding = ActivityMainBinding.inflate(layoutInflater).apply {
             setContentView(root)
         }
+
+        binding.tvAndroidVersion.text = "Android: ${Build.VERSION.RELEASE}"
+        binding.tvAppVersion.text = "App Version: ${BuildConfig.VERSION_NAME}.${BuildConfig.VERSION_CODE}"
 
         binding.clickMeButton.setOnClickListener {
             refreshWatermark()
@@ -28,6 +43,8 @@ class MainActivity : AppCompatActivity() {
 
         binding.clickHeButton.setOnClickListener {
             clearWatermark()
+            val isHighTextContrastEnabled = WaterMarkerManager.isHighTextContrastEnabled(this)
+            Log.i("MainActivity", "isHighTextContrastEnabled: $isHighTextContrastEnabled")
         }
     }
 
