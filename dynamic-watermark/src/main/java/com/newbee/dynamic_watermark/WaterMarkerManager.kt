@@ -72,14 +72,20 @@ object WaterMarkerManager {
 
     fun isHighTextContrastEnabled(context: Context): Boolean {
         if (isHighTextContrast == null) {
-            try {
-                val retVal: Int = Settings.Secure.getInt(context.contentResolver, "high_text_contrast_enabled", 0)
-                isHighTextContrast = Objects.equals(retVal, 1)
-            } catch (e: Throwable) {
-                e.printStackTrace()
-            }
+            isHighTextContrast = isHighTextContrast(context)
         }
         return isHighTextContrast ?: false
+    }
+
+    // always ask the system for the latest value
+    fun isHighTextContrast(context: Context): Boolean {
+        try {
+            val retVal: Int = Settings.Secure.getInt(context.contentResolver, "high_text_contrast_enabled", 0)
+            return Objects.equals(retVal, 1)
+        } catch (e: Throwable) {
+            e.printStackTrace()
+        }
+        return false
     }
 
     /**
@@ -229,6 +235,41 @@ object WaterMarkerManager {
         drawingView.layoutParams = FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT)
         drawingView.background = WaterMarker(context, configs)
         return drawingView
+    }
+
+    /**
+     * Re-create water marks if needed when come back to App and high_text_contrast_enabled changed
+     */
+    fun recreateWaterMarksIfNeeded(context: Context) {
+        if (isHighTextContrast(context) != isHighTextContrast) recreateWaterMarks()
+    }
+
+    private fun recreateWaterMarks() {
+        val acts = markedActivities.toList()
+        for (ref in acts) {
+            val activity = ref.get()
+            if (activity != null && !(activity.isFinishing) && !(activity.isDestroyed)) {
+                val viewGroup = activity.window.decorView as? ViewGroup
+                val frameLayout: FrameLayout? = viewGroup?.findViewById<FrameLayout>(R.id.water_mark_frame_layout)
+                viewGroup?.removeView(frameLayout)
+
+                createWaterMarkFrameLayout(activity, configs, viewGroup)
+            } else {
+                markedActivities.remove(ref)
+            }
+        }
+        val groups = markedViewGroups.toList()
+        for (ref in groups) {
+            val viewGroup = ref.get()
+            if (viewGroup != null) {
+                val frameLayout: FrameLayout? = viewGroup.findViewById<FrameLayout>(R.id.water_mark_frame_layout)
+                viewGroup.removeView(frameLayout)
+
+                createWaterMarkFrameLayout(viewGroup.context, configs, viewGroup)
+            } else {
+                markedViewGroups.remove(ref)
+            }
+        }
     }
 }
 
