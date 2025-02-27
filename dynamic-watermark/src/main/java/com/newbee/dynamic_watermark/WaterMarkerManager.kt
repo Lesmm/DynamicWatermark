@@ -10,6 +10,7 @@ import android.graphics.Paint
 import android.graphics.PixelFormat
 import android.graphics.drawable.Drawable
 import android.provider.Settings
+import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -24,6 +25,8 @@ import java.util.Objects
  * WaterMaker Manager
  */
 object WaterMarkerManager {
+
+    private const val TAG: String = "WaterMarkerManager"
 
     /**
      * Watermark all activities or not
@@ -68,13 +71,13 @@ object WaterMarkerManager {
     /**
      * Check if high text contrast is enabled in the system settings - accessibility settings
      */
-    private var isHighTextContrast: Boolean? = null
+    private var isHighTextContrastCached: Boolean? = null
 
-    fun isHighTextContrastEnabled(context: Context): Boolean {
-        if (isHighTextContrast == null) {
-            isHighTextContrast = isHighTextContrast(context)
+    fun isHighTextContrastEnabledFastly(context: Context): Boolean {
+        if (isHighTextContrastCached == null) {
+            isHighTextContrastCached = isHighTextContrast(context)
         }
-        return isHighTextContrast ?: false
+        return isHighTextContrastCached ?: false
     }
 
     // always ask the system for the latest value
@@ -208,9 +211,12 @@ object WaterMarkerManager {
         frameLayout.id = R.id.water_mark_frame_layout
         parent.addView(frameLayout)
 
+        // If high text contrast enabled by user, the text color (including alpha) will be not working, so we should alpha the view
+        val isHighContrastText = isHighTextContrastEnabledFastly(context)
+        Log.i(TAG, "createWaterMarkFrameLayout isHighContrastText: $isHighContrastText")
+
         // 2. Create TextView(s) the add to the FrameLayout
-        if (isHighTextContrastEnabled(context)) {
-            // If high text contrast enabled by user, the text color (including alpha) will be not working
+        if (isHighContrastText) {
             for (i in configs.indices) {
                 val config = configs[i]
                 val drawingView = createWaterMarkTextView(context, listOf(config))
@@ -241,7 +247,12 @@ object WaterMarkerManager {
      * Re-create water marks if needed when come back to App and high_text_contrast_enabled changed
      */
     fun recreateWaterMarksIfNeeded(context: Context) {
-        if (isHighTextContrast(context) != isHighTextContrast) recreateWaterMarks()
+        val enable = isHighTextContrast(context)
+        Log.i(TAG, "recreateWaterMarksIfNeeded: ${enable != isHighTextContrastCached}")
+        if (enable != isHighTextContrastCached) {
+            isHighTextContrastCached = enable
+            recreateWaterMarks()
+        }
     }
 
     private fun recreateWaterMarks() {

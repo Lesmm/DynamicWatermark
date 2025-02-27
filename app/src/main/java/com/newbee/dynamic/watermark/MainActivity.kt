@@ -43,8 +43,8 @@ class MainActivity : AppCompatActivity() {
 
         binding.clickHeButton.setOnClickListener {
             clearWatermark()
-            val isHighTextContrastEnabled = WaterMarkerManager.isHighTextContrastEnabled(this)
-            Log.i("MainActivity", "isHighTextContrastEnabled: $isHighTextContrastEnabled")
+            val isHighContrastTextEnabled = WaterMarkerManager.isHighTextContrastEnabledFastly(this)
+            Log.i("MainActivity", "isHighContrastTextEnabled: $isHighContrastTextEnabled")
         }
     }
 

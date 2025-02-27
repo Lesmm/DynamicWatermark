@@ -19,6 +19,7 @@ class WatermarkAppLifeCycle : ActivityLifecycleCallbacks {
     }
 
     private var activityOnForegroundCount = 0
+    private var activityOnForegroundCountPrevious = 0
 
     private val TAG = "LifecycleEvent"
 
@@ -39,18 +40,18 @@ class WatermarkAppLifeCycle : ActivityLifecycleCallbacks {
     }
 
     override fun onActivityStarted(activity: Activity) {
-        android.util.Log.i(TAG, "onActivityStarted: $activity")
+        // 计数 // Bugfix: 消息通知被点了后的 Activity 会只走了 onStart 不走 onResume 就 finish() 了. 因为把计数逻辑从 onResume 移到了 onStart
+        activityOnForegroundCountPrevious = activityOnForegroundCount
+        activityOnForegroundCount++
+        android.util.Log.i(TAG, "onActivityStarted: $activity. Activities count now: $activityOnForegroundCount")
     }
 
     override fun onActivityResumed(activity: Activity) {
-        android.util.Log.i(TAG, "onActivityResumed: $activity")
+        android.util.Log.i(TAG, "onActivityResumed: $activity. Activities count now: $activityOnForegroundCount")
         currentResumedActivity = WeakReference(activity)
 
-        // Count it
-        val previousCount = activityOnForegroundCount
-        activityOnForegroundCount++
         // App is now enter foreground
-        if (previousCount <= 0 && activityOnForegroundCount > 0) {
+        if (activityOnForegroundCountPrevious <= 0 && activityOnForegroundCount > 0) {
             android.util.Log.i(TAG, "APP ENTER FOREGROUND NOW")
             this.invokeOnAppEnterForegroundListeners()
         }
@@ -61,7 +62,7 @@ class WatermarkAppLifeCycle : ActivityLifecycleCallbacks {
     }
 
     override fun onActivityStopped(activity: Activity) {
-        android.util.Log.i(TAG, "onActivityStopped: $activity")
+        android.util.Log.i(TAG, "onActivityStopped: $activity. Activities count now: $activityOnForegroundCount")
 
         // Count it
         activityOnForegroundCount--
